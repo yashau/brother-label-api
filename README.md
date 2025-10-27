@@ -2,16 +2,19 @@
 
 A modern REST API for controlling Brother PT/QL label printers. This replaces the outdated CLI tool with a HTTP-based service that supports multiple printers, API key authentication, and both text and image printing.
 
+**[Quick Start](QUICKSTART.md)** | [API Documentation](#api-endpoints) | [Configuration](#configuration)
+
 ## Features
 
 - REST API for Brother PT/QL label printers
-- API key authentication
+- API key authentication with named keys
 - Multiple printer support with JSON configuration
-- Print text or images
+- Print text, images, or PDFs (multi-page support)
 - Auto-discovery of network printers
+- OpenTelemetry metrics for monitoring and observability
 - Support for QL series (QL-820NWB, QL-810W, QL-700, etc.)
 - Basic support for PT series (PT-P710BT, PT-P750W, etc.)
-- Works with modern Python (3.9-3.13+)
+- Works with modern Python (3.9-3.14+)
 
 ## Requirements
 
@@ -64,8 +67,6 @@ For hassle-free deployment, use Docker:
 ```bash
 docker-compose up
 ```
-
-See [Compatibility Notes](#compatibility-notes) for detailed information.
 
 ### Testing Installation
 
@@ -213,6 +214,45 @@ Body:
 }
 ```
 
+### Print PDF
+```bash
+POST /api/print
+Headers:
+  X-API-Key: your-api-key-here
+  Content-Type: application/json
+
+Body:
+{
+  "printer_id": "office-printer",
+  "pdf_base64": "JVBERi0xLjQKJeLjz9MK...",
+  "options": {
+    "rotate": 0,
+    "cut": true,
+    "margin": 10,
+    "dpi": 300
+  }
+}
+```
+
+**Note**: Multi-page PDFs are supported - each page will be printed as a separate label.
+
+Response for PDF printing includes page details:
+```json
+{
+  "success": true,
+  "message": "Print job sent successfully",
+  "printer_id": "office-printer",
+  "pages_total": 3,
+  "pages_successful": 3,
+  "pages_failed": 0,
+  "page_results": [
+    {"page": 1, "success": true, "error": null},
+    {"page": 2, "success": true, "error": null},
+    {"page": 3, "success": true, "error": null}
+  ]
+}
+```
+
 ### Discover Printers
 ```bash
 GET /api/discover
@@ -293,6 +333,26 @@ response = requests.post(
     }
 )
 print(response.json())
+
+# Print PDF (each page becomes a separate label)
+with open("document.pdf", "rb") as f:
+    pdf_data = base64.b64encode(f.read()).decode()
+
+response = requests.post(
+    f"{API_URL}/api/print",
+    headers=headers,
+    json={
+        "printer_id": "office-printer",
+        "pdf_base64": pdf_data,
+        "options": {
+            "cut": True,
+            "margin": 5,
+            "dpi": 300
+        }
+    }
+)
+result = response.json()
+print(f"Printed {result['pages_successful']} of {result['pages_total']} pages")
 ```
 
 ### Using JavaScript/Node.js

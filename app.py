@@ -118,7 +118,9 @@ def print_label():
     """
     Print a label on a Brother QL/PT printer
 
-    Expected JSON payload:
+    Supports text, images, and PDFs (multi-page PDFs print each page as a separate label)
+
+    Text printing:
     {
         "printer_id": "office-printer",
         "text": "Hello World",
@@ -130,7 +132,7 @@ def print_label():
         }
     }
 
-    Or with image:
+    Image printing:
     {
         "printer_id": "office-printer",
         "image_base64": "base64_encoded_image_data",
@@ -138,6 +140,18 @@ def print_label():
             "rotate": 0,
             "cut": true,
             "margin": 10
+        }
+    }
+
+    PDF printing (each page = one label):
+    {
+        "printer_id": "office-printer",
+        "pdf_base64": "base64_encoded_pdf_data",
+        "options": {
+            "rotate": 0,
+            "cut": true,
+            "margin": 10,
+            "dpi": 300
         }
     }
     """
@@ -181,7 +195,7 @@ def print_label():
         # Extract print options
         options = data.get('options', {})
 
-        # Handle text or image based printing
+        # Handle text, image, or PDF based printing
         if 'text' in data:
             # Measure image generation time
             image_gen_start = time.time()
@@ -208,9 +222,22 @@ def print_label():
             image_gen_duration = (time.time() - image_gen_start) * 1000
             telemetry.record_image_generation(image_gen_duration, 'image')
 
+        elif 'pdf_base64' in data:
+            image_gen_start = time.time()
+            result = ql_handler.print_pdf(
+                printer=printer,
+                pdf_base64=data['pdf_base64'],
+                rotate=options.get('rotate', 0),
+                cut=options.get('cut', True),
+                margin=options.get('margin', 10),
+                dpi=options.get('dpi', 300)
+            )
+            image_gen_duration = (time.time() - image_gen_start) * 1000
+            telemetry.record_image_generation(image_gen_duration, 'pdf')
+
         else:
             telemetry.record_error('invalid_print_data', 'print_label', api_key_name)
-            return jsonify({'error': 'Either text or image_base64 is required'}), 400
+            return jsonify({'error': 'Either text, image_base64, or pdf_base64 is required'}), 400
 
         # Calculate total print duration
         print_duration_ms = (time.time() - print_start_time) * 1000
@@ -225,11 +252,21 @@ def print_label():
                 api_key_name=api_key_name
             )
 
-            return jsonify({
+            response_data = {
                 'success': True,
                 'message': 'Print job sent successfully',
                 'printer_id': printer_id
-            }), 200
+            }
+
+            # Add PDF-specific info if available
+            if 'pages_total' in result:
+                response_data['pages_total'] = result['pages_total']
+                response_data['pages_successful'] = result['pages_successful']
+                response_data['pages_failed'] = result['pages_failed']
+                if result.get('page_results'):
+                    response_data['page_results'] = result['page_results']
+
+            return jsonify(response_data), 200
         else:
             # Record failure metrics
             error_type = result.get('error_type', 'unknown_error')

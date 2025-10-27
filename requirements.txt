@@ -26,5 +26,8 @@ opentelemetry-api>=1.20.0
 opentelemetry-sdk>=1.20.0
 opentelemetry-exporter-otlp-proto-http>=1.20.0
 
+# PDF processing (pure Python, no system dependencies required)
+PyMuPDF>=1.23.0
+
 # Note: The bundled brother_ql_fixed works with Python 3.9 through 3.13+
 # No need for different requirements files per Python version!

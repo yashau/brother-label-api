@@ -12,6 +12,12 @@ import socket
 from typing import Dict, List, Optional
 from PIL import Image, ImageDraw, ImageFont
 
+try:
+    import fitz  # PyMuPDF
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+
 
 class BrotherQLHandler:
     """Handles Brother QL/PT/QL printer operations with multiple backend support"""
@@ -165,7 +171,159 @@ class BrotherQLHandler:
         except Exception as e:
             return {
                 'success': False,
-                'error': f'Failed to print image: {str(e)}'
+                'error': f'Failed to print image: {str(e)}',
+                'error_type': 'image_print_error'
+            }
+
+    def print_pdf(
+        self,
+        printer: Dict,
+        pdf_base64: str,
+        rotate: int = 0,
+        cut: bool = True,
+        margin: int = 10,
+        dpi: int = 300
+    ) -> Dict:
+        """
+        Print a PDF on a Brother QL/PT printer
+        Each page of the PDF will be printed as a separate label
+
+        Args:
+            printer: Printer configuration dict
+            pdf_base64: Base64 encoded PDF data
+            rotate: Rotation angle (0, 90, 180, 270)
+            cut: Whether to cut the label after printing each page
+            margin: Margin in pixels
+            dpi: DPI for PDF to image conversion (default: 300)
+
+        Returns:
+            Dict with success status, pages printed count, and optional error message
+        """
+        if not PDF_SUPPORT:
+            return {
+                'success': False,
+                'error': 'PDF support not available. Install PyMuPDF: pip install PyMuPDF',
+                'error_type': 'pdf_support_missing'
+            }
+
+        try:
+            # Decode base64 PDF
+            pdf_data = base64.b64decode(pdf_base64)
+
+            # Open PDF with PyMuPDF
+            pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
+            page_count = len(pdf_document)
+
+            if page_count == 0:
+                return {
+                    'success': False,
+                    'error': 'PDF has no pages',
+                    'error_type': 'empty_pdf'
+                }
+
+            # Track results for each page
+            results = []
+            successful_pages = 0
+            failed_pages = 0
+
+            # Process each page
+            for page_num in range(page_count):
+                try:
+                    # Get the page
+                    page = pdf_document[page_num]
+
+                    # Convert page to image (pixmap)
+                    # zoom factor determines DPI: 1.0 = 72 DPI, 4.167 = 300 DPI
+                    zoom = dpi / 72.0
+                    mat = fitz.Matrix(zoom, zoom)
+                    pix = page.get_pixmap(matrix=mat)
+
+                    # Convert pixmap to PIL Image
+                    img_data = pix.tobytes("png")
+                    image = Image.open(io.BytesIO(img_data))
+
+                    # Rotate if needed
+                    if rotate in [90, 180, 270]:
+                        image = image.rotate(rotate, expand=True)
+
+                    # Convert to black and white
+                    image = image.convert('1')
+
+                    # Add margin
+                    if margin > 0:
+                        image = self._add_margin(image, margin)
+
+                    # Get printer connection details
+                    backend = printer.get('backend', 'network')
+                    identifier = printer.get('identifier')
+                    model = printer.get('model', 'QL-820NWB')
+                    label_size = printer.get('label_size', '62')
+
+                    if not identifier:
+                        results.append({
+                            'page': page_num + 1,
+                            'success': False,
+                            'error': 'Printer identifier not specified'
+                        })
+                        failed_pages += 1
+                        continue
+
+                    # Determine which library to use based on model
+                    is_ql_model = any(model.startswith(ql) for ql in ['QL-'])
+
+                    # Print the page
+                    if is_ql_model and self.has_brother_ql:
+                        page_result = self._print_with_brother_ql(
+                            image, identifier, model, backend, label_size, cut, rotate
+                        )
+                    elif not is_ql_model and self.has_labelprinterkit:
+                        page_result = self._print_with_labelprinterkit(
+                            image, identifier, model, backend, cut
+                        )
+                    else:
+                        # Fallback to raw ESC/P commands
+                        page_result = self._print_raw(image, identifier, model, backend, cut)
+
+                    # Track result for this page
+                    results.append({
+                        'page': page_num + 1,
+                        'success': page_result['success'],
+                        'error': page_result.get('error') if not page_result['success'] else None
+                    })
+
+                    if page_result['success']:
+                        successful_pages += 1
+                    else:
+                        failed_pages += 1
+
+                except Exception as e:
+                    results.append({
+                        'page': page_num + 1,
+                        'success': False,
+                        'error': str(e)
+                    })
+                    failed_pages += 1
+
+            # Close PDF
+            pdf_document.close()
+
+            # Return overall result
+            all_success = failed_pages == 0
+            return {
+                'success': all_success,
+                'pages_total': page_count,
+                'pages_successful': successful_pages,
+                'pages_failed': failed_pages,
+                'page_results': results,
+                'error': None if all_success else f'{failed_pages} of {page_count} pages failed to print',
+                'error_type': None if all_success else 'partial_pdf_print_failure'
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to process PDF: {str(e)}',
+                'error_type': 'pdf_processing_error'
             }
 
     def _print_with_brother_ql(

@@ -158,6 +158,25 @@ curl -X POST http://localhost:5000/api/print \
   }"
 ```
 
+### Print PDF
+
+**Note**: Each page of the PDF will be printed as a separate label.
+
+```bash
+# Encode PDF
+base64 document.pdf > document.b64
+
+# Print
+curl -X POST http://localhost:5000/api/print \
+  -H "X-API-Key: my-secret-key-12345" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"printer_id\": \"my-printer\",
+    \"pdf_base64\": \"$(cat document.b64 | tr -d '\n')\",
+    \"options\": {\"cut\": true, \"margin\": 10, \"dpi\": 300}
+  }"
+```
+
 ### From Python
 
 ```python
@@ -188,6 +207,18 @@ response = requests.post(url, headers=headers, json={
     "options": {"cut": True}
 })
 print(response.json())
+
+# Print PDF (each page = one label)
+with open("document.pdf", "rb") as f:
+    pdf_b64 = base64.b64encode(f.read()).decode()
+
+response = requests.post(url, headers=headers, json={
+    "printer_id": "my-printer",
+    "pdf_base64": pdf_b64,
+    "options": {"cut": True, "dpi": 300}
+})
+result = response.json()
+print(f"Printed {result['pages_successful']} of {result['pages_total']} pages")
 ```
 
 ### From JavaScript/Node.js
