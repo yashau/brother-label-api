@@ -10,7 +10,6 @@ A modern REST API for controlling Brother PT/QL label printers. This replaces th
 - API key authentication with named keys
 - Multiple printer support with JSON configuration
 - Print text, images, or PDFs (multi-page support)
-- Auto-discovery of network printers
 - OpenTelemetry metrics for monitoring and observability
 - Support for QL series (QL-820NWB, QL-810W, QL-700, etc.)
 - Basic support for PT series (PT-P710BT, PT-P750W, etc.)
@@ -253,15 +252,6 @@ Response for PDF printing includes page details:
 }
 ```
 
-### Discover Printers
-```bash
-GET /api/discover
-Headers:
-  X-API-Key: your-api-key-here
-```
-
-Discovers Brother printers on the network.
-
 ## API Examples
 
 ### Using curl
@@ -279,12 +269,6 @@ curl -X POST http://localhost:5000/api/print \
       "cut": true
     }
   }'
-```
-
-**Discover printers:**
-```bash
-curl http://localhost:5000/api/discover \
-  -H "X-API-Key: your-api-key-here"
 ```
 
 ### Using Python
@@ -589,7 +573,6 @@ The Docker image uses Python 3.11 for maximum stability and compatibility.
 ### Printer not found
 - Verify the printer is powered on and connected to the network
 - Check the IP address or USB identifier in `config.json`
-- Use the `/api/discover` endpoint to find network printers
 
 ### brother_ql library errors
 - Ensure all dependencies are installed: `pip install -r requirements.txt`

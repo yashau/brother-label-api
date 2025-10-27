@@ -301,20 +301,6 @@ def print_label():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/discover', methods=['GET'])
-@require_api_key
-def discover_printers():
-    """Discover Brother QL/PT printers on the network"""
-    api_key_name = g.get('api_key_name')
-
-    try:
-        printers = ql_handler.discover_printers()
-        return jsonify({'discovered': printers}), 200
-    except Exception as e:
-        telemetry.record_error('discovery_failed', 'discover_printers', api_key_name)
-        return jsonify({'error': str(e)}), 500
-
-
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
