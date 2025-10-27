@@ -1,0 +1,43 @@
+{
+  "api_keys": [
+    "your-api-key-here",
+    "another-api-key"
+  ],
+  "printers": [
+    {
+      "id": "office-ql",
+      "name": "Office QL-820NWB",
+      "model": "QL-820NWB",
+      "backend": "network",
+      "identifier": "tcp://192.168.1.100",
+      "label_size": "62",
+      "comment": "QL series - Supported via brother_ql library"
+    },
+    {
+      "id": "warehouse-ql",
+      "name": "Warehouse QL-810W",
+      "model": "QL-810W",
+      "backend": "network",
+      "identifier": "tcp://192.168.1.101",
+      "label_size": "62",
+      "comment": "QL series network printer"
+    },
+    {
+      "id": "pt-printer",
+      "name": "PT Series Label Printer",
+      "model": "PT-P710BT",
+      "backend": "network",
+      "identifier": "tcp://192.168.1.102",
+      "comment": "PT series - Requires additional library (labelprinterkit)"
+    },
+    {
+      "id": "usb-printer",
+      "name": "USB Connected QL Printer",
+      "model": "QL-700",
+      "backend": "pyusb",
+      "identifier": "usb://0x04f9:0x2042",
+      "label_size": "62",
+      "comment": "USB connection - Requires pyusb library"
+    }
+  ]
+}

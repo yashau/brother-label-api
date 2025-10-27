@@ -1,0 +1,25 @@
+# Requirements using bundled fixed brother_ql (Python 3.9-3.13+)
+# Use this for ALL Python versions 3.9 and above
+
+# Core web framework
+Flask==3.1.0
+Werkzeug==3.0.3
+
+# Image processing
+Pillow==10.4.0
+
+# Brother printer library - BUNDLED FIXED VERSION
+# Install from local directory (no python-future dependency)
+-e ./brother_ql_fixed
+
+# Optional: For PT series with USB support
+# labelprinterkit==0.7.1
+
+# USB support (optional, for direct USB connections)
+# pyusb==1.2.1
+
+# Network/HTTP client
+requests==2.31.0
+
+# Note: The bundled brother_ql_fixed works with Python 3.9 through 3.13+
+# No need for different requirements files per Python version!

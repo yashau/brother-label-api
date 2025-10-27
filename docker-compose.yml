@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  brother-label-api:
+    build: .
+    container_name: brother-label-api
+    image: brother-label-api:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount config file from host
+      - ./config.json:/app/config/config.json:ro
+    environment:
+      - PORT=5000
+      - DEBUG=False
+      - CONFIG_FILE=/app/config/config.json
+    restart: unless-stopped
+    networks:
+      - printer-network
+    # Optional: Add healthcheck
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  printer-network:
+    driver: bridge
