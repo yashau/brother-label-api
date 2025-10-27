@@ -18,34 +18,35 @@
       "id": "office-ql",
       "name": "Office QL-820NWB",
       "model": "QL-820NWB",
-      "backend": "network",
-      "identifier": "tcp://192.168.1.100",
+      "connection": "network",
+      "address": "192.168.1.100",
       "label_size": "62",
-      "comment": "QL series - Supported via brother_ql library"
+      "comment": "QL series - IP address"
     },
     {
       "id": "warehouse-ql",
       "name": "Warehouse QL-810W",
       "model": "QL-810W",
-      "backend": "network",
-      "identifier": "tcp://192.168.1.101",
+      "connection": "network",
+      "address": "warehouse-printer.local",
       "label_size": "62",
-      "comment": "QL series network printer"
+      "comment": "QL series - hostname"
     },
     {
       "id": "pt-printer",
       "name": "PT Series Label Printer",
       "model": "PT-P710BT",
-      "backend": "network",
-      "identifier": "tcp://192.168.1.102",
-      "comment": "PT series - Requires additional library (labelprinterkit)"
+      "connection": "network",
+      "address": "192.168.1.102",
+      "port": 9100,
+      "comment": "PT series with explicit port"
     },
     {
       "id": "usb-printer",
       "name": "USB Connected QL Printer",
       "model": "QL-700",
-      "backend": "pyusb",
-      "identifier": "usb://0x04f9:0x2042",
+      "connection": "usb",
+      "address": "0x04f9:0x2042",
       "label_size": "62",
       "comment": "USB connection - Requires pyusb library"
     }

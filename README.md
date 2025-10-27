@@ -105,8 +105,15 @@ Edit `config.json` to add your printers and API keys:
       "id": "office-printer",
       "name": "Office PT-P710BT",
       "model": "PT-P710BT",
-      "backend": "network",
-      "identifier": "tcp://192.168.1.100"
+      "connection": "network",
+      "address": "192.168.1.100"
+    },
+    {
+      "id": "label-printer",
+      "name": "Label Printer",
+      "model": "QL-820NWB",
+      "connection": "network",
+      "address": "printer.local"
     }
   ]
 }
@@ -127,12 +134,15 @@ The `name` field is useful for:
 
 - `id`: Unique identifier for the printer (used in API calls)
 - `name`: Human-readable name
-- `model`: Brother printer model (PT-P710BT, PT-P750W, etc.)
-- `backend`: Connection type (`network`, `pyusb`, `linux_kernel`)
-- `identifier`: Connection string
-  - Network: `tcp://192.168.1.100`
-  - USB: `usb://0x04f9:0x2042`
-  - Serial: `file:///dev/usb/lp0`
+- `model`: Brother printer model (PT-P710BT, PT-P750W, QL-820NWB, etc.)
+- `connection`: Connection type (`network`, `usb`, `serial`)
+- `address`: Connection address
+  - Network (IP): `192.168.1.100`
+  - Network (hostname): `printer.local` or `office-printer`
+  - USB: `0x04f9:0x2042`
+  - Serial: `/dev/usb/lp0`
+- `port`: (Optional) Port number for network connections (default: 9100)
+- `label_size`: Label size in mm (e.g., `62`, `29`, `38`) - required for QL series
 
 ## Usage
 

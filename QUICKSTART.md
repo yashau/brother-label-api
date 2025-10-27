@@ -6,10 +6,11 @@ Get your Brother Label API API running in **2 minutes** with Docker!
 
 - **Docker and Docker Compose** installed ([Get Docker](https://docs.docker.com/get-docker/))
 - Brother QL or PT series printer on your network
-- Printer's IP address
+- Printer's IP address or hostname
 
-**Don't know your printer's IP?**
-- Check your router's admin page
+**Don't know your printer's IP or hostname?**
+- Check your router's admin page for IP address or hostname
+- Use hostname if your printer supports mDNS/Bonjour (e.g., `printer.local`)
 - Windows: `arp -a` and look for Brother device
 - Linux/Mac: `nmap -sn 192.168.1.0/24` (if nmap installed)
 
@@ -38,9 +39,10 @@ Edit `config.json` with your printer:
     "id": "my-printer",
     "name": "Office Printer",
     "model": "QL-820NWB",
-    "backend": "network",
-    "identifier": "tcp://192.168.1.100",
-    "label_size": "62"
+    "connection": "network",
+    "address": "192.168.1.100",
+    "label_size": "62",
+    "comment": "Use IP address or hostname (e.g., printer.local)"
   }]
 }
 ```

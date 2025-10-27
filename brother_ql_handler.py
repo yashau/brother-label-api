@@ -142,16 +142,20 @@ class BrotherQLHandler:
                 image = self._add_margin(image, margin)
 
             # Get printer connection details
-            backend = printer.get('backend', 'network')
-            identifier = printer.get('identifier')
+            connection = printer.get('connection', 'network')
+            address = printer.get('address')
+            port = printer.get('port', 9100)
             model = printer.get('model', 'QL-820NWB')
             label_size = printer.get('label_size', '62')
 
-            if not identifier:
+            if not address:
                 return {
                     'success': False,
-                    'error': 'Printer identifier not specified'
+                    'error': 'Printer address not specified'
                 }
+
+            # Construct identifier and backend for brother_ql library
+            identifier, backend = self._construct_identifier(connection, address, port)
 
             # Determine which library to use based on model
             is_ql_model = any(model.startswith(ql) for ql in ['QL-'])
@@ -254,19 +258,23 @@ class BrotherQLHandler:
                         image = self._add_margin(image, margin)
 
                     # Get printer connection details
-                    backend = printer.get('backend', 'network')
-                    identifier = printer.get('identifier')
+                    connection = printer.get('connection', 'network')
+                    address = printer.get('address')
+                    port = printer.get('port', 9100)
                     model = printer.get('model', 'QL-820NWB')
                     label_size = printer.get('label_size', '62')
 
-                    if not identifier:
+                    if not address:
                         results.append({
                             'page': page_num + 1,
                             'success': False,
-                            'error': 'Printer identifier not specified'
+                            'error': 'Printer address not specified'
                         })
                         failed_pages += 1
                         continue
+
+                    # Construct identifier and backend for brother_ql library
+                    identifier, backend = self._construct_identifier(connection, address, port)
 
                     # Determine which library to use based on model
                     is_ql_model = any(model.startswith(ql) for ql in ['QL-'])
@@ -452,6 +460,37 @@ class BrotherQLHandler:
                 'success': False,
                 'error': f'Raw print failed: {str(e)}'
             }
+
+    def _construct_identifier(self, connection: str, address: str, port: int = None) -> tuple:
+        """
+        Construct printer identifier and backend from connection details.
+
+        Args:
+            connection: Connection type ('network', 'usb', 'serial')
+            address: Address (IP/hostname for network, device path for USB/serial)
+            port: Port number (for network connections, default 9100)
+
+        Returns:
+            Tuple of (identifier, backend) for brother_ql library
+        """
+        if connection == 'network':
+            if port:
+                identifier = f"tcp://{address}:{port}"
+            else:
+                identifier = f"tcp://{address}"
+            backend = 'network'
+        elif connection == 'usb':
+            identifier = f"usb://{address}"
+            backend = 'pyusb'
+        elif connection == 'serial':
+            identifier = f"file://{address}"
+            backend = 'linux_kernel'
+        else:
+            # Unknown connection type, treat as network
+            identifier = f"tcp://{address}"
+            backend = 'network'
+
+        return identifier, backend
 
     def discover_printers(self) -> List[Dict]:
         """
