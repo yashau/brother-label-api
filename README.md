@@ -91,7 +91,14 @@ Edit `config.json` to add your printers and API keys:
 ```json
 {
   "api_keys": [
-    "your-secret-api-key-here"
+    {
+      "name": "production-app",
+      "key": "your-secret-api-key-here"
+    },
+    {
+      "name": "staging-env",
+      "key": "another-api-key"
+    }
   ],
   "printers": [
     {
@@ -104,6 +111,17 @@ Edit `config.json` to add your printers and API keys:
   ]
 }
 ```
+
+### API Key Configuration
+
+Each API key requires:
+- `name`: A descriptive name/alias for the API key (e.g., "production-app", "mobile-client")
+- `key`: The actual API key string used for authentication
+
+The `name` field is useful for:
+- Identifying which application/client is making requests
+- Tracking usage per client in logs and telemetry
+- Managing and rotating keys
 
 ### Printer Configuration Fields
 
@@ -361,9 +379,102 @@ The API primarily uses the `brother_ql` library for QL series printers, which pr
 
 ## Environment Variables
 
+### Server Configuration
 - `PORT`: Server port (default: 5000)
 - `DEBUG`: Enable debug mode (default: False)
 - `CONFIG_FILE`: Path to configuration file (default: config.json)
+
+### OpenTelemetry Configuration
+- `OTEL_ENABLED`: Enable telemetry export (`true`/`false`, default: `false`)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OTLP HTTP endpoint URL
+- `OTEL_EXPORTER_OTLP_HEADERS`: Headers for authentication (format: `key1=value1,key2=value2`)
+- `OTEL_SERVICE_NAME`: Service name in telemetry (default: `brother-label-api`)
+- `OTEL_ENVIRONMENT`: Deployment environment (default: `production`)
+- `OTEL_EXPORT_INTERVAL_MS`: Metric export interval in milliseconds (default: `60000`)
+
+See [`.env.example`](.env.example) for a complete configuration template.
+
+## OpenTelemetry Metrics
+
+The API includes comprehensive OpenTelemetry instrumentation for monitoring and observability. Metrics are exported via OTLP HTTP protocol, compatible with Grafana Cloud, Datadog, New Relic, and other observability platforms.
+
+### Enabling Telemetry
+
+1. **Set environment variables**:
+```bash
+export OTEL_ENABLED=true
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <your-token>"
+```
+
+2. **Or use a `.env` file**:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+### Metrics Collected
+
+#### Counters (always increasing)
+- `api.requests.total` - Total API requests
+  - Labels: `endpoint`, `method`, `status_code`, `api_key_name`
+- `prints.total` - Total print jobs attempted
+  - Labels: `printer_id`, `printer_model`, `label_type`, `api_key_name`
+- `prints.success` - Successful print jobs
+  - Labels: `printer_id`, `printer_model`, `label_type`, `api_key_name`
+- `prints.failed` - Failed print jobs
+  - Labels: `printer_id`, `printer_model`, `error_type`, `api_key_name`
+- `errors.total` - Total errors by type
+  - Labels: `error_type`, `endpoint`, `api_key_name`
+
+#### Histograms (distribution of values)
+- `http.request.duration` - HTTP request duration (ms)
+  - Labels: `endpoint`, `method`, `status_code`
+- `print.duration` - Print job duration (ms)
+  - Labels: `printer_id`, `printer_model`, `result`
+- `image.generation.duration` - Label image generation time (ms)
+  - Labels: `label_type`
+- `printer.response.time` - Printer response time (ms)
+  - Labels: `printer_id`, `printer_model`
+
+#### Gauges (current value)
+- `printers.configured` - Number of configured printers
+- `api_keys.configured` - Number of configured API keys
+
+### Grafana Cloud Example
+
+```bash
+# 1. Get your Grafana Cloud credentials
+# - Endpoint: https://otlp-gateway-prod-<region>.grafana.net/otlp
+# - Token: From Grafana Cloud → Configuration → API Keys
+
+# 2. Set environment variables
+export OTEL_ENABLED=true
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-us-central-0.grafana.net/otlp
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer glc_<your-token>"
+export OTEL_SERVICE_NAME=brother-label-api
+export OTEL_ENVIRONMENT=production
+
+# 3. Start the server
+python app.py
+```
+
+### Privacy & Security
+
+The telemetry implementation is designed with privacy in mind:
+- ✅ **API key names** are included (e.g., "production-app") for tracking
+- ❌ **API key values** are never sent
+- ❌ **Label content** (text/images) is never sent
+- ✅ **Printer metadata** (ID, model) is included for diagnostics
+- ✅ **Error types** and metrics are included for monitoring
+
+### Disabling Telemetry
+
+Telemetry is **disabled by default**. To keep it disabled:
+- Don't set `OTEL_ENABLED=true`
+- Or explicitly set `OTEL_ENABLED=false`
+
+When disabled, the API uses no-op metrics collectors with zero performance impact.
 
 ## Docker Deployment
 

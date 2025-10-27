@@ -136,10 +136,22 @@ def test_installation():
                 config = json.load(f)
 
             if 'api_keys' in config and len(config['api_keys']) > 0:
-                if config['api_keys'][0] == 'your-api-key-here':
-                    print(f"  ⚠ Using default API key - please change it!")
+                # Check if using new format with named keys
+                first_key = config['api_keys'][0]
+                if isinstance(first_key, dict):
+                    # New format: {"name": "...", "key": "..."}
+                    if first_key.get('key') == 'your-api-key-here':
+                        print(f"  ⚠ Using default API key - please change it!")
+                    else:
+                        print(f"  ✓ API keys configured ({len(config['api_keys'])} key(s))")
+                        # Show key names
+                        for key_obj in config['api_keys']:
+                            if isinstance(key_obj, dict):
+                                name = key_obj.get('name', 'unnamed')
+                                print(f"     - {name}")
                 else:
-                    print(f"  ✓ API keys configured ({len(config['api_keys'])} key(s))")
+                    print(f"  ⚠ Old API key format detected - please update to new format")
+                    print(f"  → See README.md for new format with names")
             else:
                 print(f"  ⚠ No API keys found in config.json")
 

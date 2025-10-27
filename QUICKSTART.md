@@ -28,7 +28,12 @@ Edit `config.json` with your printer:
 
 ```json
 {
-  "api_keys": ["my-secret-key-12345"],
+  "api_keys": [
+    {
+      "name": "my-app",
+      "key": "my-secret-key-12345"
+    }
+  ],
   "printers": [{
     "id": "my-printer",
     "name": "Office Printer",

@@ -1,7 +1,17 @@
 {
   "api_keys": [
-    "your-api-key-here",
-    "another-api-key"
+    {
+      "name": "production-app",
+      "key": "your-secret-api-key-here"
+    },
+    {
+      "name": "staging-env",
+      "key": "another-api-key-here"
+    },
+    {
+      "name": "development",
+      "key": "dev-api-key"
+    }
   ],
   "printers": [
     {
