@@ -20,7 +20,7 @@ All functionality from the original package is preserved.
 '''
 
 setup(name='brother_ql',
-      version = '0.9.5',
+      version = '0.9.5.1',
       description = 'Python package to talk to Brother QL label printers (Python 3.9+ fixed)',
       long_description = LDESC,
       author = 'Philipp Klaus (original), Python 3.9+ fixes',

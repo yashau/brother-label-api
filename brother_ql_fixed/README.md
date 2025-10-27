@@ -13,8 +13,8 @@ The original `brother_ql` v0.9.4 had a dependency on `python-future`, a Python 2
 1. ✅ Removed `python-future` dependency from setup.py
 2. ✅ Removed `from __future__ import` statements
 3. ✅ Removed Python < 3.5 conditional dependencies (`typing`, `enum34`)
-4. ✅ Updated version to 0.9.5
-5. ✅ Added Python 3.9-3.13 to classifiers
+4. ✅ Updated version to 0.9.5.1 (identifies this as the fixed version)
+5. ✅ Added Python 3.9-3.14+ to classifiers
 
 **Preserved:**
 - ✅ All original functionality

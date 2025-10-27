@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test script to verify Brother Label API installation
 Run this before starting the API server
 """
 
 import sys
+import os
+
+# Fix Windows console encoding for Unicode characters
+if sys.platform == 'win32':
+    os.system('chcp 65001 >nul 2>&1')
+    if sys.stdout.encoding != 'utf-8':
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def test_installation():
     """Test all required dependencies"""
@@ -23,13 +32,16 @@ def test_installation():
         print(f"  ✓ brother_ql installed: {version}")
 
         # Verify it's the fixed version
-        if version == '0.9.5':
+        if version == '0.9.5.1':
             print(f"  ✓ Using FIXED version (bundled in this project)")
-        elif version == '0.9.4' or version == '0.9.dev0':
-            print(f"  ⚠ WARNING: Using OLD version from PyPI (not recommended)")
+        elif version in ('0.9.5', '0.9.4', '0.9.dev0'):
+            print(f"  ⚠ WARNING: Using OLD/WRONG version from PyPI (not the fixed version)")
             print(f"  → Reinstall with: pip install -r requirements.txt")
+            all_ok = False
         else:
-            print(f"  ℹ Using version: {version}")
+            print(f"  ⚠ WARNING: Unknown version: {version}")
+            print(f"  → Expected version: 0.9.5.1 (fixed version)")
+            all_ok = False
 
         # Check for python-future dependency (should NOT be present)
         try:
@@ -83,7 +95,12 @@ def test_installation():
     print("[3/5] Testing Flask framework...")
     try:
         import flask
-        print(f"  ✓ Flask installed: {flask.__version__}")
+        try:
+            from importlib.metadata import version
+            flask_version = version('flask')
+        except Exception:
+            flask_version = getattr(flask, '__version__', 'unknown')
+        print(f"  ✓ Flask installed: {flask_version}")
 
         from flask import Flask, request, jsonify
         print(f"  ✓ Flask imports work")
@@ -111,7 +128,6 @@ def test_installation():
 
     # Test config file
     print("[5/5] Testing configuration...")
-    import os
     if os.path.exists('config.json'):
         print(f"  ✓ config.json exists")
         try:

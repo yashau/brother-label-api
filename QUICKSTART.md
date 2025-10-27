@@ -262,7 +262,6 @@ docker compose up -d
 ## Next Steps
 
 - 📖 Read [README.md](README.md) for complete API documentation
-- 🔧 Check [COMPATIBILITY.md](COMPATIBILITY.md) for Python compatibility
 - 🖨️ Add more printers to `config.json`
 - 🚀 Deploy to production with reverse proxy (nginx)
 

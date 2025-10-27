@@ -77,9 +77,10 @@ python test_printer.py
 
 Expected output:
 ```
-✓ brother_ql installed: 0.9.5
+✓ brother_ql installed: 0.9.5.1
+✓ Using FIXED version (bundled in this project)
 ✓ QL series models supported
-✓ Pillow installed: 10.4.0
+✓ Pillow installed: 12.0.0
 ✓ Flask installed: 3.1.0
 ```
 
